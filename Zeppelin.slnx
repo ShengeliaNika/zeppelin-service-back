@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Zeppelin.Api/Zeppelin.Api.csproj" />
+    <Project Path="src/Zeppelin.Domain/Zeppelin.Domain.csproj" />
+    <Project Path="src/Zeppelin.Infrastructure/Zeppelin.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Zeppelin.IntegrationTests/Zeppelin.IntegrationTests.csproj" />
+    <Project Path="tests/Zeppelin.UnitTests/Zeppelin.UnitTests.csproj" />
+  </Folder>
+</Solution>

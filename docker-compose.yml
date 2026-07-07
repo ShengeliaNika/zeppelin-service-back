@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: zeppelin
+      POSTGRES_USER: zeppelin
+      POSTGRES_PASSWORD: zeppelin_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - zeppelin_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  zeppelin_postgres_data:
