@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddSingleton<ITokenService, TokenService>();
         services.AddScoped<SchedulingService>();
         services.AddScoped<InventoryService>();
+        services.AddScoped<InventoryReportingService>();
         services.AddScoped<RecallReminderService>();
 
         services.Configure<LocalDiskFileStorageOptions>(configuration.GetSection(LocalDiskFileStorageOptions.SectionName));

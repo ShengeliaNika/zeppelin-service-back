@@ -15,13 +15,9 @@ public class AlertsController(InventoryService inventoryService, RecallReminderS
     [HttpGet]
     public async Task<ActionResult<CombinedAlertsDto>> Get([FromQuery] int expiringWithinDays = 30)
     {
-        var lowStock = (await inventoryService.GetLowStockItemsAsync())
-            .Select(i => new InventoryItemDto(
-                i.Id, i.Name, i.Category, i.Unit, i.SupplierName, i.SupplierContact, i.CurrentStock, i.ParLevel, i.IsActive,
-                i.Batches.Where(b => b.QuantityRemaining > 0)
-                    .Select(b => new InventoryBatchDto(b.Id, b.LotNumber, b.ExpiryDate, b.QuantityRemaining))
-                    .ToList()))
-            .ToList();
+        var lowStockItems = await inventoryService.GetLowStockItemsAsync();
+        var avgCosts = await inventoryService.GetAverageCostsAsync(lowStockItems.Select(i => i.Id));
+        var lowStock = lowStockItems.Select(i => InventoryItemsController.ToDto(i, avgCosts)).ToList();
 
         var expiringSoon = (await inventoryService.GetExpiringSoonBatchesAsync(expiringWithinDays))
             .Select(b => new ExpiringBatchDto(b.InventoryItemId, b.InventoryItem!.Name, b.Id, b.LotNumber, b.ExpiryDate!.Value, b.QuantityRemaining))

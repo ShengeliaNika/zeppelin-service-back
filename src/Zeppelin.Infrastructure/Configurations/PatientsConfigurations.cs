@@ -9,6 +9,7 @@ public class PatientConfiguration : IEntityTypeConfiguration<Patient>
     public void Configure(EntityTypeBuilder<Patient> builder)
     {
         builder.HasIndex(p => new { p.LastName, p.FirstName });
+        builder.HasIndex(p => p.PatientNumber).IsUnique();
 
         builder.HasMany(p => p.MedicalHistory).WithOne(m => m.Patient!)
             .HasForeignKey(m => m.PatientId).OnDelete(DeleteBehavior.Cascade);

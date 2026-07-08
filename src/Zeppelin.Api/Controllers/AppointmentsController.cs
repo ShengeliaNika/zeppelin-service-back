@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Zeppelin.Api.Dtos.Inventory;
 using Zeppelin.Api.Dtos.Scheduling;
 using Zeppelin.Domain.Common;
 using Zeppelin.Domain.Entities.Scheduling;
@@ -17,15 +18,19 @@ public class AppointmentsController(ZeppelinDbContext db, SchedulingService sche
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AppointmentDto>>> GetAll(
-        [FromQuery] DateTime from, [FromQuery] DateTime to, [FromQuery] Guid? dentistUserId, [FromQuery] Guid? chairId)
+        [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] Guid? dentistUserId, [FromQuery] Guid? chairId, [FromQuery] Guid? patientId)
     {
         var query = db.Appointments
             .Include(a => a.Patient)
             .Include(a => a.DentistUser)
             .Include(a => a.Chair)
             .Include(a => a.AppointmentType)
-            .Where(a => a.StartAtUtc < to && from < a.EndAtUtc)
             .AsQueryable();
+
+        if (from is not null && to is not null)
+        {
+            query = query.Where(a => a.StartAtUtc < to && from < a.EndAtUtc);
+        }
 
         if (dentistUserId is { } dentist)
         {
@@ -35,6 +40,11 @@ public class AppointmentsController(ZeppelinDbContext db, SchedulingService sche
         if (chairId is { } chair)
         {
             query = query.Where(a => a.ChairId == chair);
+        }
+
+        if (patientId is { } patient)
+        {
+            query = query.Where(a => a.PatientId == patient);
         }
 
         var appointments = await query.OrderBy(a => a.StartAtUtc).ToListAsync();
@@ -131,7 +141,31 @@ public class AppointmentsController(ZeppelinDbContext db, SchedulingService sche
         return await GetById(id);
     }
 
-    private static AppointmentDto ToDto(Appointment a) => new(
+    // Supplies a doctor logged as used during this visit (UsageDeduction/Waste
+    // stock movements tagged with this AppointmentId) - lets "what did we use
+    // for this session" be reviewed from the appointment itself.
+    [HttpGet("{id:guid}/stock-movements")]
+    public async Task<ActionResult<IReadOnlyList<AppointmentSupplyUsageDto>>> GetSupplyUsage(Guid id)
+    {
+        var movements = await db.StockMovements
+            .Include(m => m.InventoryItem)
+            .Include(m => m.RecordedByUser)
+            .Where(m => m.AppointmentId == id)
+            .OrderByDescending(m => m.RecordedAtUtc)
+            .ToListAsync();
+
+        return Ok(movements.Select(m => new AppointmentSupplyUsageDto(
+            m.Id,
+            m.InventoryItemId,
+            m.InventoryItem!.Name,
+            m.InventoryItem.Unit,
+            m.Type,
+            m.Quantity,
+            m.RecordedByUser is null ? string.Empty : $"{m.RecordedByUser.FirstName} {m.RecordedByUser.LastName}",
+            m.RecordedAtUtc)).ToList());
+    }
+
+    internal static AppointmentDto ToDto(Appointment a) => new(
         a.Id,
         a.PatientId,
         $"{a.Patient!.FirstName} {a.Patient.LastName}",

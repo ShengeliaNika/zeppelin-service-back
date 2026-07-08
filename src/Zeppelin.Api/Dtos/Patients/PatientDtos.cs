@@ -4,20 +4,24 @@ namespace Zeppelin.Api.Dtos.Patients;
 
 public record PatientSummaryDto(
     Guid Id,
+    int PatientNumber,
     string FirstName,
     string LastName,
     DateOnly DateOfBirth,
     string? Phone,
+    string? Email,
     bool IsActive);
 
 public record PatientDto(
     Guid Id,
+    int PatientNumber,
     string FirstName,
     string LastName,
     DateOnly DateOfBirth,
     string? Sex,
     string? Phone,
     string? Email,
+    string? IdentityNumber,
     string? AddressLine1,
     string? AddressLine2,
     string? City,
@@ -36,6 +40,7 @@ public record CreatePatientRequest(
     string? Sex,
     string? Phone,
     string? Email,
+    string? IdentityNumber,
     string? AddressLine1,
     string? AddressLine2,
     string? City,
@@ -52,6 +57,7 @@ public record UpdatePatientRequest(
     string? Sex,
     string? Phone,
     string? Email,
+    string? IdentityNumber,
     string? AddressLine1,
     string? AddressLine2,
     string? City,
@@ -61,6 +67,8 @@ public record UpdatePatientRequest(
     string? InsurancePolicyNumber,
     string? InsuranceGroupNumber,
     bool IsActive);
+
+public record PatientStatusCountsDto(int All, int Initial, int Archived);
 
 public record MedicalHistoryEntryDto(
     Guid Id,

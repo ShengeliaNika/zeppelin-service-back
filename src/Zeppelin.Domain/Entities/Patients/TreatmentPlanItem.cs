@@ -19,5 +19,9 @@ public class TreatmentPlanItem : IAuditable
     // billing phase has historical estimates to work from.
     public decimal? EstimatedCost { get; set; }
 
+    // Set/cleared when Status transitions to/from Done - lets the dashboard
+    // compute "estimated revenue this month" without real billing.
+    public DateTime? CompletedAtUtc { get; set; }
+
     public int SortOrder { get; set; }
 }

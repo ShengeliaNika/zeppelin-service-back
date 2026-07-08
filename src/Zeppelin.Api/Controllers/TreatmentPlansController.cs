@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Zeppelin.Api.Dtos.Clinical;
 using Zeppelin.Domain.Common;
 using Zeppelin.Domain.Entities.Patients;
+using Zeppelin.Domain.Enums;
 using Zeppelin.Infrastructure;
 using Zeppelin.Infrastructure.Auditing;
 
@@ -112,6 +113,7 @@ public class TreatmentPlansController(ZeppelinDbContext db, ICurrentUserAccessor
 
         item.Status = request.Status;
         item.AppointmentId = request.AppointmentId;
+        item.CompletedAtUtc = request.Status == TreatmentPlanItemStatus.Done ? DateTime.UtcNow : null;
 
         await db.SaveChangesAsync();
         return Ok(new TreatmentPlanItemDto(item.Id, item.Description, item.ToothNumber, item.Status, item.AppointmentId, item.EstimatedCost, item.SortOrder));

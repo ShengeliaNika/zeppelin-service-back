@@ -9,7 +9,12 @@ public record DashboardSummaryDto(
     int ActivePatientsCount,
     int LowStockCount,
     int ExpiringSoonCount,
-    int RecallDueCount);
+    int RecallDueCount,
+    decimal EstimatedRevenueThisMonth,
+    decimal InventoryValuation,
+    int CompletedLast7DaysCount,
+    int NoShowLast7DaysCount,
+    int CancelledLast7DaysCount);
 
 public record RecallReminderDto(Guid Id, Guid PatientId, string PatientName, string AppointmentTypeName, DateOnly DueDate);
 

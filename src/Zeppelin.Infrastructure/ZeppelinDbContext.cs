@@ -5,6 +5,7 @@ using Zeppelin.Domain.Entities.Identity;
 using Zeppelin.Domain.Entities.Inventory;
 using Zeppelin.Domain.Entities.Patients;
 using Zeppelin.Domain.Entities.Scheduling;
+using Zeppelin.Domain.Entities.Team;
 
 namespace Zeppelin.Infrastructure;
 
@@ -24,6 +25,8 @@ public class ZeppelinDbContext(DbContextOptions<ZeppelinDbContext> options)
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<InventoryBatch> InventoryBatches => Set<InventoryBatch>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<ItemSupplier> ItemSuppliers => Set<ItemSupplier>();
 
     public DbSet<AppointmentType> AppointmentTypes => Set<AppointmentType>();
     public DbSet<Chair> Chairs => Set<Chair>();
@@ -32,6 +35,8 @@ public class ZeppelinDbContext(DbContextOptions<ZeppelinDbContext> options)
     public DbSet<RecallReminder> RecallReminders => Set<RecallReminder>();
 
     public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
+
+    public DbSet<TeamTask> TeamTasks => Set<TeamTask>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

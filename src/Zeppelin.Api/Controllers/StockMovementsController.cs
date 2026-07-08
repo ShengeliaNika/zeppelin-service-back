@@ -19,6 +19,7 @@ public class StockMovementsController(ZeppelinDbContext db, InventoryService inv
     {
         var movements = await db.StockMovements
             .Include(m => m.RecordedByUser)
+            .Include(m => m.Supplier)
             .Where(m => m.InventoryItemId == itemId)
             .OrderByDescending(m => m.RecordedAtUtc)
             .ToListAsync();
@@ -40,9 +41,15 @@ public class StockMovementsController(ZeppelinDbContext db, InventoryService inv
                 request.AppointmentTypeId,
                 request.AppointmentId,
                 request.Notes,
-                currentUser.UserId!.Value);
+                currentUser.UserId!.Value,
+                request.SupplierId,
+                request.UnitCost);
 
             await db.Entry(movement).Reference(m => m.RecordedByUser).LoadAsync();
+            if (movement.SupplierId is not null)
+            {
+                await db.Entry(movement).Reference(m => m.Supplier).LoadAsync();
+            }
             return Ok(ToDto(movement));
         }
         catch (InventoryItemNotFoundException)
@@ -57,6 +64,9 @@ public class StockMovementsController(ZeppelinDbContext db, InventoryService inv
         m.Quantity,
         m.InventoryBatchId,
         m.AppointmentTypeId,
+        m.SupplierId,
+        m.Supplier?.Name,
+        m.UnitCost,
         m.Notes,
         m.RecordedByUser is null ? string.Empty : $"{m.RecordedByUser.FirstName} {m.RecordedByUser.LastName}",
         m.RecordedAtUtc);

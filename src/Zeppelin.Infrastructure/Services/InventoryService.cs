@@ -24,9 +24,14 @@ public class InventoryService(ZeppelinDbContext db)
         Guid? appointmentTypeId,
         Guid? appointmentId,
         string? notes,
-        Guid recordedByUserId)
+        Guid recordedByUserId,
+        Guid? supplierId = null,
+        decimal? unitCost = null)
     {
-        var item = await db.InventoryItems.Include(i => i.Batches).FirstOrDefaultAsync(i => i.Id == inventoryItemId)
+        var item = await db.InventoryItems
+            .Include(i => i.Batches)
+            .Include(i => i.ItemSuppliers)
+            .FirstOrDefaultAsync(i => i.Id == inventoryItemId)
             ?? throw new InventoryItemNotFoundException(inventoryItemId);
 
         Guid? batchId = null;
@@ -47,6 +52,20 @@ public class InventoryService(ZeppelinDbContext db)
                     };
                     db.InventoryBatches.Add(batch);
                     batchId = batch.Id;
+                }
+                if (supplierId is not null)
+                {
+                    var link = item.ItemSuppliers.FirstOrDefault(l => l.SupplierId == supplierId);
+                    if (link is null)
+                    {
+                        link = new ItemSupplier { Id = Guid.NewGuid(), InventoryItemId = item.Id, SupplierId = supplierId.Value };
+                        db.ItemSuppliers.Add(link);
+                        item.ItemSuppliers.Add(link);
+                    }
+                    if (unitCost is not null)
+                    {
+                        link.LastUnitCost = unitCost;
+                    }
                 }
                 break;
 
@@ -78,6 +97,8 @@ public class InventoryService(ZeppelinDbContext db)
             Quantity = quantity,
             AppointmentTypeId = appointmentTypeId,
             AppointmentId = appointmentId,
+            SupplierId = type == StockMovementType.Restock ? supplierId : null,
+            UnitCost = type == StockMovementType.Restock ? unitCost : null,
             RecordedByUserId = recordedByUserId,
             Notes = notes,
         };
@@ -92,6 +113,7 @@ public class InventoryService(ZeppelinDbContext db)
     {
         return await db.InventoryItems
             .Include(i => i.Batches)
+            .Include(i => i.ItemSuppliers).ThenInclude(l => l.Supplier)
             .Where(i => i.IsActive && i.CurrentStock <= i.ParLevel)
             .ToListAsync();
     }
@@ -105,4 +127,62 @@ public class InventoryService(ZeppelinDbContext db)
             .OrderBy(b => b.ExpiryDate)
             .ToListAsync();
     }
+
+    public async Task<List<InventoryBatch>> GetAllActiveBatchesAsync()
+    {
+        return await db.InventoryBatches
+            .Include(b => b.InventoryItem)
+            .Where(b => b.InventoryItem!.IsActive && b.QuantityRemaining > 0)
+            .OrderBy(b => b.ExpiryDate ?? DateOnly.MaxValue)
+            .ToListAsync();
+    }
+
+    // Weighted average of UnitCost across an item's Restock history - the
+    // real valuation basis. Falls back to InventoryItem.PurchaseFee (set by
+    // the caller) for items with no cost-bearing restock yet.
+    public async Task<Dictionary<Guid, decimal>> GetAverageCostsAsync(IEnumerable<Guid> itemIds)
+    {
+        var ids = itemIds.ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var costed = await db.StockMovements
+            .Where(m => ids.Contains(m.InventoryItemId) && m.Type == StockMovementType.Restock && m.UnitCost != null)
+            .GroupBy(m => m.InventoryItemId)
+            .Select(g => new { InventoryItemId = g.Key, TotalCost = g.Sum(m => m.Quantity * m.UnitCost!.Value), TotalQty = g.Sum(m => m.Quantity) })
+            .ToListAsync();
+
+        return costed
+            .Where(x => x.TotalQty > 0)
+            .ToDictionary(x => x.InventoryItemId, x => x.TotalCost / x.TotalQty);
+    }
+
+    public async Task<InventorySummary> GetSummaryAsync()
+    {
+        var items = await db.InventoryItems.Include(i => i.Batches).Where(i => i.IsActive).ToListAsync();
+        var avgCosts = await GetAverageCostsAsync(items.Select(i => i.Id));
+
+        decimal totalValuation = 0;
+        var negativeMarginCount = 0;
+        var cutoff = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30);
+
+        foreach (var item in items)
+        {
+            var cost = avgCosts.GetValueOrDefault(item.Id, item.PurchaseFee ?? 0);
+            totalValuation += item.CurrentStock * cost;
+            if (item.IsForSale && item.SaleFee is not null && item.SaleFee.Value - cost < 0)
+            {
+                negativeMarginCount++;
+            }
+        }
+
+        var lowStockCount = items.Count(i => i.CurrentStock <= i.ParLevel);
+        var expiringSoonCount = items.Count(i => i.Batches.Any(b => b.QuantityRemaining > 0 && b.ExpiryDate != null && b.ExpiryDate <= cutoff));
+
+        return new InventorySummary(totalValuation, lowStockCount, expiringSoonCount, negativeMarginCount);
+    }
 }
+
+public record InventorySummary(decimal TotalValuation, int LowStockCount, int ExpiringSoonCount, int NegativeMarginCount);

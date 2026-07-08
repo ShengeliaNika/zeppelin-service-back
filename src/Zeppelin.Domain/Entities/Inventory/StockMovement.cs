@@ -21,6 +21,13 @@ public class StockMovement
     public AppointmentType? AppointmentType { get; set; }
     public Guid? AppointmentId { get; set; }
     public Appointment? Appointment { get; set; }
+
+    // Only meaningfully populated on Restock; source of truth for
+    // ItemSupplier.LastUnitCost, not a financial ledger entry.
+    public Guid? SupplierId { get; set; }
+    public Supplier? Supplier { get; set; }
+    public decimal? UnitCost { get; set; }
+
     public Guid RecordedByUserId { get; set; }
     public ApplicationUser? RecordedByUser { get; set; }
     public string? Notes { get; set; }

@@ -60,6 +60,20 @@ public enum StockMovementType
     Adjustment,
 }
 
+public enum InventorySaleType
+{
+    ForDoctor,
+    ForPatient,
+}
+
+public enum TeamTaskStatus
+{
+    Open,
+    InProgress,
+    Done,
+    Cancelled,
+}
+
 public enum AppointmentStatus
 {
     Scheduled,

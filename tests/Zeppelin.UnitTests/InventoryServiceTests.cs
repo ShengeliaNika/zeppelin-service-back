@@ -114,4 +114,62 @@ public class InventoryServiceTests
         await Assert.ThrowsAsync<InventoryItemNotFoundException>(() =>
             service.RecordMovementAsync(Guid.NewGuid(), StockMovementType.Restock, 1, null, null, null, null, null, Guid.NewGuid()));
     }
+
+    [Fact]
+    public async Task RestockWithSupplierAndCostCreatesItemSupplierLink()
+    {
+        await using var db = CreateContext();
+        var item = MakeItem(currentStock: 0, parLevel: 10);
+        var supplier = new Supplier { Id = Guid.NewGuid(), Name = "Acme Dental Supply" };
+        db.InventoryItems.Add(item);
+        db.Suppliers.Add(supplier);
+        await db.SaveChangesAsync();
+
+        var service = new InventoryService(db);
+        await service.RecordMovementAsync(
+            item.Id, StockMovementType.Restock, 10, null, null, null, null, null, Guid.NewGuid(),
+            supplierId: supplier.Id, unitCost: 4.5m);
+
+        var link = Assert.Single(db.ItemSuppliers.Local);
+        Assert.Equal(supplier.Id, link.SupplierId);
+        Assert.Equal(4.5m, link.LastUnitCost);
+    }
+
+    [Fact]
+    public async Task RestockWithSupplierUpdatesExistingLinkInsteadOfDuplicating()
+    {
+        await using var db = CreateContext();
+        var item = MakeItem(currentStock: 0, parLevel: 10);
+        var supplier = new Supplier { Id = Guid.NewGuid(), Name = "Acme Dental Supply" };
+        db.InventoryItems.Add(item);
+        db.Suppliers.Add(supplier);
+        await db.SaveChangesAsync();
+
+        var service = new InventoryService(db);
+        await service.RecordMovementAsync(item.Id, StockMovementType.Restock, 10, null, null, null, null, null, Guid.NewGuid(), supplier.Id, 4.5m);
+        await service.RecordMovementAsync(item.Id, StockMovementType.Restock, 10, null, null, null, null, null, Guid.NewGuid(), supplier.Id, 5.0m);
+
+        var link = Assert.Single(db.ItemSuppliers.Local);
+        Assert.Equal(5.0m, link.LastUnitCost);
+    }
+
+    [Fact]
+    public async Task GetAllActiveBatchesAsyncReturnsOnlyBatchesWithRemainingStockOrderedByExpiry()
+    {
+        await using var db = CreateContext();
+        var item = MakeItem(currentStock: 30, parLevel: 10);
+        var soon = new InventoryBatch { Id = Guid.NewGuid(), InventoryItemId = item.Id, ExpiryDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5)), QuantityRemaining = 5 };
+        var later = new InventoryBatch { Id = Guid.NewGuid(), InventoryItemId = item.Id, ExpiryDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(50)), QuantityRemaining = 5 };
+        var depleted = new InventoryBatch { Id = Guid.NewGuid(), InventoryItemId = item.Id, ExpiryDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)), QuantityRemaining = 0 };
+        item.Batches.AddRange([soon, later, depleted]);
+        db.InventoryItems.Add(item);
+        await db.SaveChangesAsync();
+
+        var service = new InventoryService(db);
+        var batches = await service.GetAllActiveBatchesAsync();
+
+        Assert.Equal(2, batches.Count);
+        Assert.Equal(soon.Id, batches[0].Id);
+        Assert.Equal(later.Id, batches[1].Id);
+    }
 }

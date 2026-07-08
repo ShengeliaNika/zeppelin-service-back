@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Zeppelin.Infrastructure;
@@ -11,9 +12,11 @@ using Zeppelin.Infrastructure;
 namespace Zeppelin.Infrastructure.Migrations
 {
     [DbContext(typeof(ZeppelinDbContext))]
-    partial class ZeppelinDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260708083249_AddTeamTasks")]
+    partial class AddTeamTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -751,9 +754,6 @@ namespace Zeppelin.Infrastructure.Migrations
 
                     b.Property<Guid?>("AppointmentId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("CompletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()

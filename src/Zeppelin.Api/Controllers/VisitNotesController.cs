@@ -53,7 +53,7 @@ public class VisitNotesController(ZeppelinDbContext db, ICurrentUserAccessor cur
         return Ok(ToDto(note));
     }
 
-    private static VisitNoteDto ToDto(VisitNote note) => new(
+    internal static VisitNoteDto ToDto(VisitNote note) => new(
         note.Id,
         note.AppointmentId,
         note.PatientId,

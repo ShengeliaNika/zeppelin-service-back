@@ -6,12 +6,17 @@ namespace Zeppelin.Domain.Entities.Patients;
 public class Patient : IAuditable
 {
     public Guid Id { get; set; }
+
+    // Sequential, human-facing identifier (assigned on create as max+1) -
+    // distinct from Id, used for the MRN search/display in the UI.
+    public int PatientNumber { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public DateOnly DateOfBirth { get; set; }
     public string? Sex { get; set; }
     public string? Phone { get; set; }
     public string? Email { get; set; }
+    public string? IdentityNumber { get; set; }
     public string? AddressLine1 { get; set; }
     public string? AddressLine2 { get; set; }
     public string? City { get; set; }
