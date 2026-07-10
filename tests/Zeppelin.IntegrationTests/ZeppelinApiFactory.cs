@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Testcontainers.PostgreSql;
-using Zeppelin.Infrastructure;
+using Zeppelin;
 
 namespace Zeppelin.IntegrationTests;
 

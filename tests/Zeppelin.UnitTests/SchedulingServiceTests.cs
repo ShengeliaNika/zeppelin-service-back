@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Xunit;
-using Zeppelin.Domain.Entities.Scheduling;
-using Zeppelin.Domain.Enums;
-using Zeppelin.Infrastructure;
-using Zeppelin.Infrastructure.Services;
+using Zeppelin.Entities.Scheduling;
+using Zeppelin.Enums;
+using Zeppelin;
+using Zeppelin.Services;
 
 namespace Zeppelin.UnitTests;
 

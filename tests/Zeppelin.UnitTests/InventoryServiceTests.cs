@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Xunit;
-using Zeppelin.Domain.Entities.Inventory;
-using Zeppelin.Domain.Enums;
-using Zeppelin.Infrastructure;
-using Zeppelin.Infrastructure.Services;
+using Zeppelin.Entities.Inventory;
+using Zeppelin.Enums;
+using Zeppelin;
+using Zeppelin.Services;
 
 namespace Zeppelin.UnitTests;
 

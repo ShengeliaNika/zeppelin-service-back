@@ -20,8 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Zeppelin.Domain\Zeppelin.Domain.csproj" />
-    <ProjectReference Include="..\..\src\Zeppelin.Infrastructure\Zeppelin.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Zeppelin.csproj" />
   </ItemGroup>
 
 </Project>

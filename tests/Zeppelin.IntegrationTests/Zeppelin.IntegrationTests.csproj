@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Zeppelin.Api\Zeppelin.Api.csproj" />
+    <ProjectReference Include="..\..\Zeppelin.csproj" />
   </ItemGroup>
 
 </Project>
